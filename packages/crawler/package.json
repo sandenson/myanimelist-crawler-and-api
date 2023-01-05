@@ -1,0 +1,10 @@
+{
+  "name": "@myanimelist-crawler-and-api/crawler",
+  "version": "1.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "@myanimelist-crawler-and-api/shared": "workspace:^",
+    "crawlee": "^3.1.4",
+    "playwright": "^1.29.1"
+  }
+}

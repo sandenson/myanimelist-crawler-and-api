@@ -1,1 +1,0 @@
-# myanimelist-crawler-and-api

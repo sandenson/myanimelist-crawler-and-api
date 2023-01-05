@@ -1,0 +1,16 @@
+{
+  "name": "myanimelist-crawler-and-api",
+  "version": "1.0.0",
+  "repository": "https://github.com/sandenson/myanimelist-crawler-and-api.git",
+  "author": "sandenson <lgabrielsandes@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "packageManager": "yarn@3.3.1",
+  "scripts": {
+    "api": "yarn workspace @myanimelist-crawler-and-api/api",
+    "crawler": "yarn workspace @myanimelist-crawler-and-api/crawler"
+  }
+}
