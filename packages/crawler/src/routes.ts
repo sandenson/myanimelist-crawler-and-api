@@ -35,3 +35,126 @@ router.addHandler("top-manga", async ({ enqueueLinks, page, log }) => {
         label: 'top-manga'
     })
 });
+
+router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
+    log.info(`Handling anime URLs`);
+
+    const [_, malId, slug] = /\/anime\/([0-9]*)\/([^\/]*)/gm.exec(request.url) as RegExpExecArray;
+    
+    //* Selectors
+    await page.waitForSelector('div.score-label');
+    
+    const score = await page.locator('div.score-label').innerText();
+    
+    const title = await page.locator('.title-name.h1_bold_none > strong').innerText();
+
+    const infoSelector = '#content > table > tbody > tr > td.borderClass > div > div';
+
+    await page.waitForSelector(infoSelector);
+
+    const type = (await page.locator(infoSelector).filter({hasText: 'Type:'}).innerText()).replace('Type: ', '').toLowerCase().replace(' ', '_');
+
+    const status = (await page.locator(infoSelector).filter({hasText: 'Status:'}).innerText()).replace('Status: ', '').toLowerCase().replace(' ', '_');
+
+    const episodes = Number((await page.locator(infoSelector).filter({hasText: 'Episodes:'}).innerText()).replace('Episodes: ', '')) || null;
+
+    const source = Number((await page.locator(infoSelector).filter({hasText: 'Source:'}).innerText()).replace('Source: ', '')) || null;
+
+    const seasonUrl = type === 'tv' ? await page.locator(infoSelector).filter({hasText: 'Premiered:'}).locator('a').getAttribute('href') : null;
+
+    let year: number | null = null;
+    let season: string | null = null;
+
+    if (seasonUrl) {
+        const seasonMatch = /\/anime\/season\/([0-9]{4,4})\/([aefgilmnprstuw]{4,6})/gm.exec(seasonUrl);
+
+        if (seasonMatch) {
+            year = Number(seasonMatch[1]);
+            season = seasonMatch[2];    
+        }
+    }
+
+    const producerUrls = await page.locator(infoSelector).filter({ hasText: 'Producers:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const producerIds = producerUrls.filter(prod => !!prod).map(prod => {
+        const [_, malId] = /\/anime\/producer\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        return Number(malId);
+    })
+
+    enqueueLinks({
+        urls: producerUrls,
+        label: 'producers'
+    })
+
+    const licensorUrls = await page.locator(infoSelector).filter({ hasText: 'Licensors:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const licensorIds = licensorUrls.filter(prod => !!prod).map(prod => {
+        const [_, malId] = /\/anime\/producer\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        return Number(malId);
+    })
+
+    enqueueLinks({
+        urls: licensorUrls,
+        label: 'licensors'
+    })
+
+    const studioUrls = await page.locator(infoSelector).filter({ hasText: 'Studios:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const studioIds = studioUrls.filter(prod => !!prod).map(prod => {
+        const [_, malId] = /\/anime\/producer\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        return Number(malId);
+    })
+
+    enqueueLinks({
+        urls: studioUrls,
+        label: 'studios'
+    })
+
+    const genreUrls = await page.locator(infoSelector).filter({ hasText: 'Genres:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const genreIds = genreUrls.filter(prod => !!prod).map(prod => {
+        const [_, malId] = /\/anime\/genre\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        return Number(malId);
+    })
+
+    enqueueLinks({
+        urls: genreUrls,
+        label: 'genres'
+    })
+
+    const themeUrls1 = await page.locator(infoSelector).filter({ hasText: 'Themes:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const themeUrls2 = await page.locator(infoSelector).filter({ hasText: 'Theme:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+
+    const themeUrls = themeUrls1.concat(themeUrls2);
+    const themeIds = themeUrls.filter(prod => !!prod).map(prod => {
+        const [_, malId] = /\/anime\/genre\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        return Number(malId);
+    })
+
+    enqueueLinks({
+        urls: themeUrls,
+        label: 'themes'
+    })
+
+    const externalLinks = await page.locator('.external_links > a').locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+
+    const results = {
+        malId,
+        title,
+        slug,
+        url: request.url,
+        score,
+        type,
+        status,
+        episodes,
+        source,
+        season: {
+            year,
+            season
+        },
+        producers: producerIds,
+        licensors: licensorIds,
+        studios: studioIds,
+        genres: genreIds,
+        themes: themeIds,
+        externalLinks
+    };
+
+    console.log('anime results', results);
+});
