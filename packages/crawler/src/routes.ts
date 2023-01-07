@@ -48,6 +48,10 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
     
     const title = await page.locator('.title-name.h1_bold_none > strong').innerText();
 
+    await page.waitForSelector('p[itemprop="description"]');
+
+    const description = await page.locator('p[itemprop="description"]').innerText();
+
     const infoSelector = '#content > table > tbody > tr > td.borderClass > div > div.spaceit_pad';
 
     await page.waitForSelector(infoSelector);
@@ -154,6 +158,7 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
         type,
         status,
         episodes,
+        description,
         source: {
             type: sourceType,
             sources
@@ -187,6 +192,10 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
     const infoSelector = '#content > table > tbody > tr > td.borderClass > div > div.spaceit_pad';
     
     const title = await page.$eval('span[itemprop="name"]', el => el.firstChild?.textContent);
+
+    await page.waitForSelector('p[itemprop="description"]');
+
+    const description = await page.locator('p[itemprop="description"]').innerText();
 
     await page.waitForSelector(infoSelector);
 
@@ -278,6 +287,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
         chapters,
         volumes,
         authors,
+        description,
         serializers: serializerIds,
         genres: genreIds,
         themes: themeIds,
