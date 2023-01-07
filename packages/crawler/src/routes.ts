@@ -58,7 +58,9 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
 
     const episodes = Number((await page.locator(infoSelector).filter({hasText: 'Episodes:'}).innerText()).replace('Episodes: ', '')) || null;
 
-    const source = Number((await page.locator(infoSelector).filter({hasText: 'Source:'}).innerText()).replace('Source: ', '')) || null;
+    const sourceType = (await page.locator(infoSelector).filter({hasText: 'Source:'}).innerText()).replace('Source: ', '').toLowerCase().replace(' ', '_');
+    
+    const sources = await page.locator('table.anime_detail_related_anime > tbody > tr').filter({ hasText: 'Adaptation:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href)) as string[] | null;
 
     const seasonUrl = type === 'tv' ? await page.locator(infoSelector).filter({hasText: 'Premiered:'}).locator('a').getAttribute('href') : null;
 
@@ -132,7 +134,7 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
         label: 'themes'
     })
 
-    const externalLinks = await page.locator('.external_links > a').locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const externalLinks = await page.locator('.external_links > a').locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href)) as string[] | null;
 
     const results = {
         malId,
@@ -143,7 +145,10 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
         type,
         status,
         episodes,
-        source,
+        source: {
+            type: sourceType,
+            sources
+        },
         season: {
             year,
             season
