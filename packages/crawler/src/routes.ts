@@ -48,7 +48,7 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
     
     const title = await page.locator('.title-name.h1_bold_none > strong').innerText();
 
-    const infoSelector = '#content > table > tbody > tr > td.borderClass > div > div';
+    const infoSelector = '#content > table > tbody > tr > td.borderClass > div > div.spaceit_pad';
 
     await page.waitForSelector(infoSelector);
 
@@ -175,7 +175,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
     
     const score = await page.locator('div.score-label').innerText();
 
-    const infoSelector = '#content > table > tbody > tr > td.borderClass > div > div';
+    const infoSelector = '#content > table > tbody > tr > td.borderClass > div > div.spaceit_pad';
     
     const title = await page.$eval('span[itemprop="name"]', el => el.firstChild?.textContent);
 
