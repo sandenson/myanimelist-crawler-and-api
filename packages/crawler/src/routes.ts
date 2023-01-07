@@ -15,7 +15,7 @@ router.addHandler("top-anime", async ({ enqueueLinks, page, log }) => {
     await page.waitForSelector('.icon-top-ranking-page-bottom a.link-blue-box.next');
     await enqueueLinks({
         selector: '.icon-top-ranking-page-bottom > a.link-blue-box.next',
-        label: 'top-manga'
+        label: 'top-anime'
     })
 });
 
@@ -208,7 +208,10 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
         label: 'magazines'
     })
 
-    const genreUrls = await page.locator(infoSelector).filter({ hasText: 'Genres:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const genreUrls1 = await page.locator(infoSelector).filter({ hasText: 'Genres:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const genreUrls2 = await page.locator(infoSelector).filter({ hasText: 'Genre:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+
+    const genreUrls = genreUrls1.concat(genreUrls2);
     const genreIds = genreUrls.filter(prod => !!prod).map(prod => {
         const [_, malId] = /\/manga\/genre\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
         return Number(malId);
@@ -233,12 +236,10 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
         label: 'themes'
     })
 
-    const authorAnchorElements = await page.locator(infoSelector).filter({ hasText: 'Authors:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els);
+    const authorObjs = await page.locator(infoSelector).filter({ hasText: 'Authors:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => {
+        const url = el.href;
 
-    const authorUrls = authorAnchorElements.map(el => el.href);
-
-    const authors = authorAnchorElements.forEach(el => {
-        const [_, malId] = /\/people\/([0-9]*)\/([^\/]*)/gm.exec(el.href) as RegExpExecArray;
+        const [_, malId] = /\/people\/([0-9]*)\/([^\/]*)/gm.exec(url) as RegExpExecArray;
         
         const [__, role] = /\(([^(^)]*)\)/gm.exec(document.evaluate(
             'following-sibling::text()',
@@ -247,17 +248,23 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
             XPathResult.STRING_TYPE
         ).stringValue) as RegExpExecArray;
 
-        return { malId: Number(malId), role };
-    });
+        return { url, author: { malId: Number(malId), role } };
+    }));
+
+    const authors = authorObjs.map(obj => obj.author);
 
     enqueueLinks({
-        urls: authorUrls,
+        urls: authorObjs.map(obj => obj.url),
         label: 'authors'
     })
 
     const externalLinks = await page.locator('.external_links > a').locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href)) as string[] | null;
     
-    const parentStory = await page.locator('table.anime_detail_related_anime > tbody > tr').filter({ hasText: 'Parent story:' }).locator('a').evaluate((el: HTMLAnchorElement) => el.href) as string | null;
+    const parentStory = await page.locator('table.anime_detail_related_anime > tbody > tr').filter({ hasText: 'Parent story:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => {
+        const [_, malId] = /\/manga\/([0-9]*)\/([^\/]*)/gm.exec(el.href) as RegExpExecArray;
+
+        return Number(malId);
+    })) as number[] | null;
 
     const results = {
         malId: Number(malId),
@@ -273,7 +280,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
         serializers: serializerIds,
         genres: genreIds,
         themes: themeIds,
-        parentStory,
+        parentStory: parentStory ? parentStory[0] : null,
         externalLinks
     };
 
