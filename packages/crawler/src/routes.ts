@@ -60,7 +60,15 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
 
     const sourceType = (await page.locator(infoSelector).filter({hasText: 'Source:'}).innerText()).replace('Source: ', '').toLowerCase().replace(' ', '_');
     
-    const sources = await page.locator('table.anime_detail_related_anime > tbody > tr').filter({ hasText: 'Adaptation:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href)) as string[] | null;
+    const sources =
+        await page.
+            locator('table.anime_detail_related_anime > tbody > tr')
+            .filter({ hasText: 'Adaptation:' })
+            .locator('a')
+            .evaluateAll((els: HTMLAnchorElement[]) => els.map(el => {
+                const [_, malId] = /\/manga\/([0-9]*)\/([^\/]*)/gm.exec(el.href) as RegExpExecArray;
+                return Number(malId);
+            })) as number[] | null;
 
     const seasonUrl = type === 'tv' ? await page.locator(infoSelector).filter({hasText: 'Premiered:'}).locator('a').getAttribute('href') : null;
 
@@ -137,7 +145,7 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
     const externalLinks = await page.locator('.external_links > a').locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href)) as string[] | null;
 
     const results = {
-        malId,
+        malId: Number(malId),
         title,
         slug,
         url: request.url,
@@ -239,7 +247,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
             XPathResult.STRING_TYPE
         ).stringValue) as RegExpExecArray;
 
-        return { malId, role };
+        return { malId: Number(malId), role };
     });
 
     enqueueLinks({
@@ -252,7 +260,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
     const parentStory = await page.locator('table.anime_detail_related_anime > tbody > tr').filter({ hasText: 'Parent story:' }).locator('a').evaluate((el: HTMLAnchorElement) => el.href) as string | null;
 
     const results = {
-        malId,
+        malId: Number(malId),
         title,
         slug,
         url: request.url,
