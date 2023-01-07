@@ -163,3 +163,111 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
 
     console.log('anime results', results);
 });
+
+router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
+    
+    log.info(`Handling manga URLs`);
+
+    const [_, malId, slug] = /\/manga\/([0-9]*)\/([^\/]*)/gm.exec(request.url) as RegExpExecArray;
+    
+    //* Selectors
+    await page.waitForSelector('div.score-label');
+    
+    const score = await page.locator('div.score-label').innerText();
+
+    const infoSelector = '#content > table > tbody > tr > td.borderClass > div > div';
+    
+    const title = await page.$eval('span[itemprop="name"]', el => el.firstChild?.textContent);
+
+    await page.waitForSelector(infoSelector);
+
+    const type = (await page.locator(infoSelector).filter({hasText: 'Type:'}).innerText()).replace('Type: ', '').toLowerCase().replace(' ', '_');
+
+    const status = (await page.locator(infoSelector).filter({hasText: 'Status:'}).innerText()).replace('Status: ', '').toLowerCase().replace(' ', '_');
+
+    const chapters = Number((await page.locator(infoSelector).filter({hasText: 'Chapters:'}).innerText()).replace('Chapters: ', '')) || null;
+
+    const volumes = Number((await page.locator(infoSelector).filter({hasText: 'Volumes:'}).innerText()).replace('Volumes: ', '')) || null;
+
+    const serializerUrls = await page.locator(infoSelector).filter({ hasText: 'Serialization:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const serializerIds = serializerUrls.filter(ser => !!ser).map(ser => {
+        const [_, malId] = /\/manga\/magazine\/([0-9]*)\/([^\/]*)/gm.exec(ser) as RegExpExecArray;
+        return Number(malId);
+    })
+
+    enqueueLinks({
+        urls: serializerUrls,
+        label: 'magazines'
+    })
+
+    const genreUrls = await page.locator(infoSelector).filter({ hasText: 'Genres:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const genreIds = genreUrls.filter(prod => !!prod).map(prod => {
+        const [_, malId] = /\/manga\/genre\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        return Number(malId);
+    })
+
+    enqueueLinks({
+        urls: genreUrls,
+        label: 'genres'
+    })
+
+    const themeUrls1 = await page.locator(infoSelector).filter({ hasText: 'Themes:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const themeUrls2 = await page.locator(infoSelector).filter({ hasText: 'Theme:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+
+    const themeUrls = themeUrls1.concat(themeUrls2);
+    const themeIds = themeUrls.filter(prod => !!prod).map(prod => {
+        const [_, malId] = /\/manga\/genre\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        return Number(malId);
+    })
+
+    enqueueLinks({
+        urls: themeUrls,
+        label: 'themes'
+    })
+
+    const authorAnchorElements = await page.locator(infoSelector).filter({ hasText: 'Authors:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els);
+
+    const authorUrls = authorAnchorElements.map(el => el.href);
+
+    const authors = authorAnchorElements.forEach(el => {
+        const [_, malId] = /\/people\/([0-9]*)\/([^\/]*)/gm.exec(el.href) as RegExpExecArray;
+        
+        const [__, role] = /\(([^(^)]*)\)/gm.exec(document.evaluate(
+            'following-sibling::text()',
+            el,
+            null,
+            XPathResult.STRING_TYPE
+        ).stringValue) as RegExpExecArray;
+
+        return { malId, role };
+    });
+
+    enqueueLinks({
+        urls: authorUrls,
+        label: 'authors'
+    })
+
+    const externalLinks = await page.locator('.external_links > a').locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href)) as string[] | null;
+    
+    const parentStory = await page.locator('table.anime_detail_related_anime > tbody > tr').filter({ hasText: 'Parent story:' }).locator('a').evaluate((el: HTMLAnchorElement) => el.href) as string | null;
+
+    const results = {
+        malId,
+        title,
+        slug,
+        url: request.url,
+        score,
+        type,
+        status,
+        chapters,
+        volumes,
+        authors,
+        serializers: serializerIds,
+        genres: genreIds,
+        themes: themeIds,
+        parentStory,
+        externalLinks
+    };
+
+    console.log('anime results', results);
+});
