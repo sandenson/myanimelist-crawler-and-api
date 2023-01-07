@@ -84,7 +84,7 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
         }
     }
 
-    const producerUrls = await page.locator(infoSelector).filter({ hasText: 'Producers:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const producerUrls = await page.locator(infoSelector).filter({ hasText: 'Producers:' }).locator('a[title]').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
     const producerIds = producerUrls.filter(prod => !!prod).map(prod => {
         const [_, malId] = /\/anime\/producer\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
         return Number(malId);
@@ -95,8 +95,9 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
         label: 'producers'
     })
 
-    const licensorUrls = await page.locator(infoSelector).filter({ hasText: 'Licensors:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const licensorUrls = await page.locator(infoSelector).filter({ hasText: 'Licensors:' }).locator('a[title]').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
     const licensorIds = licensorUrls.filter(prod => !!prod).map(prod => {
+        console.log('producer check', prod);
         const [_, malId] = /\/anime\/producer\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
         return Number(malId);
     })
@@ -106,7 +107,7 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
         label: 'licensors'
     })
 
-    const studioUrls = await page.locator(infoSelector).filter({ hasText: 'Studios:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
+    const studioUrls = await page.locator(infoSelector).filter({ hasText: 'Studios:' }).locator('a[title]').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
     const studioIds = studioUrls.filter(prod => !!prod).map(prod => {
         const [_, malId] = /\/anime\/producer\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
         return Number(malId);
