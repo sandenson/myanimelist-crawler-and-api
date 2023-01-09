@@ -1,4 +1,5 @@
 import { createPlaywrightRouter } from "crawlee";
+import { producerHandler } from "./handlers/producerHandler.ts";
 
 export const router = createPlaywrightRouter();
 
@@ -101,7 +102,6 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
 
     const licensorUrls = await page.locator(infoSelector).filter({ hasText: 'Licensors:' }).locator('a[title]').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
     const licensorIds = licensorUrls.filter(prod => !!prod).map(prod => {
-        console.log('producer check', prod);
         const [_, malId] = /\/anime\/producer\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
         return Number(malId);
     })
@@ -296,4 +296,28 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
     };
 
     console.log('anime results', results);
+});
+
+router.addHandler("producers", async ({ request, page, log }) => {
+    log.info(`Handling producer URLs`);
+
+    const results = await producerHandler({request, page});
+
+    console.log('producer results', results);
+});
+
+router.addHandler("licensors", async ({ request, page, log }) => {
+    log.info(`Handling licensor URLs`);
+
+    const results = await producerHandler({request, page});
+
+    console.log('licensor results', results);
+});
+
+router.addHandler("studios", async ({ request, page, log }) => {
+    log.info(`Handling studio URLs`);
+
+    const results = await producerHandler({request, page});
+
+    console.log('studio results', results);
 });
