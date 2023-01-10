@@ -14,7 +14,7 @@ export const producerHandler = async ({request, page}: { request: Request<Dictio
 
     const japaneseName = (await page.locator(spaceitPadSelector).filter({ hasText: 'Japanese:' }).innerText()).replace('Japanese: ', '').trim();
     
-    const establishment = new Date((await page.locator(spaceitPadSelector).filter({ hasText: 'Established:' }).innerText()).replace('Established: ', '').trim());
+    const establishment = new Date((await page.locator(spaceitPadSelector).filter({ hasText: 'Established:' }).innerText()).replace('Established: ', '').trim()) || null;
 
     let description: string | null = null;
 

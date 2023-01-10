@@ -50,9 +50,9 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
     
     const title = await page.locator('.title-name.h1_bold_none > strong').innerText();
 
-    await page.waitForSelector('p[itemprop="description"]');
+    await page.waitForSelector('[itemprop="description"]');
 
-    const description = await page.locator('p[itemprop="description"]').innerText();
+    const description = await page.locator('[itemprop="description"]').innerText();
 
     const infoSelector = '#content > table > tbody > tr > td.borderClass > div > div.spaceit_pad';
 
@@ -194,9 +194,9 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
     
     const title = await page.$eval('span[itemprop="name"]', el => el.firstChild?.textContent);
 
-    await page.waitForSelector('p[itemprop="description"]');
+    await page.waitForSelector('[itemprop="description"]');
 
-    const description = await page.locator('p[itemprop="description"]').innerText();
+    const description = await page.locator('[itemprop="description"]').innerText();
 
     await page.waitForSelector(infoSelector);
 
@@ -343,4 +343,23 @@ router.addHandler("themes", async ({ request, page, log }) => {
     const results = await genreHandler({request, page});
 
     console.log('theme results', results);
+});
+
+router.addHandler("magazines", async ({ request, page, log }) => {
+    log.info(`Handling magazine URLs`);
+
+    const [_, malId, slug] = /\/manga\/magazine\/([0-9]*)\/([^\/]*)/gm.exec(request.url) as RegExpExecArray;
+
+    //* Selectors
+    await page.waitForSelector('#contentWrapper > div:nth-child(1) > h1.h1');
+    const name = await (await page.locator('#contentWrapper > div:nth-child(1) > h1.h1').innerText()).replace('Anime', '').trim();
+
+    const results = {
+        malId,
+        slug,
+        url: request.url,
+        name
+    }
+
+    console.log('magazine results', results);
 });
