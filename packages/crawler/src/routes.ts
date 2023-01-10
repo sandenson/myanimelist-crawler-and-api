@@ -1,4 +1,5 @@
 import { createPlaywrightRouter } from "crawlee";
+import { genreHandler } from "./handlers/genreHandler.ts";
 import { producerHandler } from "./handlers/producerHandler.ts";
 
 export const router = createPlaywrightRouter();
@@ -320,4 +321,26 @@ router.addHandler("studios", async ({ request, page, log }) => {
     const results = await producerHandler({request, page});
 
     console.log('studio results', results);
+});
+
+router.addHandler("genres", async ({ request, page, log }) => {
+    log.info(`Handling genre URLs`);
+
+    await page.waitForSelector('#content > div.mt8.ml8.mr8 > p');
+    const description = await (await page.locator('#content > div.mt8.ml8.mr8 > p').innerText()).trim();
+
+    const results = {
+        ...await genreHandler({request, page}),
+        description
+    }
+
+    console.log('genre results', results);
+});
+
+router.addHandler("themes", async ({ request, page, log }) => {
+    log.info(`Handling theme URLs`);
+
+    const results = await genreHandler({request, page});
+
+    console.log('theme results', results);
 });
