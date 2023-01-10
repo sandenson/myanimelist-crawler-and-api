@@ -257,7 +257,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
             el,
             null,
             XPathResult.STRING_TYPE
-        ).stringValue) as RegExpExecArray;
+        ).stringValue.trim()) as RegExpExecArray;
 
         return { url, author: { malId: Number(malId), role } };
     }));
@@ -362,4 +362,65 @@ router.addHandler("magazines", async ({ request, page, log }) => {
     }
 
     console.log('magazine results', results);
+});
+
+router.addHandler("authors", async ({ request, page, log }) => {
+    log.info(`Handling author URLs`);
+
+    const [_, malId, slug] = /\/people\/([0-9]*)\/([^\/]*)/gm.exec(request.url) as RegExpExecArray;
+
+    //* Selectors
+    await page.waitForSelector('#contentWrapper');
+    const name = await (await page.locator('h1.title-name.h1_bold_none > strong').innerText()).split(', ').reverse().join(' ');
+
+    const infoSelector = '#content > table > tbody > tr > td.borderClass';
+    await page.waitForSelector(infoSelector);
+
+    let givenName: string | null = null
+
+    try {
+        givenName = await page.locator(infoSelector).locator('span.dark_text').filter({ hasText: 'Given name:' }).evaluate((el) => document.evaluate(
+        'following-sibling::text()',
+        el,
+        null,
+        XPathResult.STRING_TYPE
+    ).stringValue.trim());
+    } catch (error) {}
+
+    let familyName: string | null = null
+
+    try {
+        familyName = await page.locator(infoSelector).locator('span.dark_text').filter({ hasText: 'Family name:' }).evaluate((el) => document.evaluate(
+        'following-sibling::text()',
+        el,
+        null,
+        XPathResult.STRING_TYPE
+    ).stringValue.trim());
+    } catch (error) {}
+
+    const birthday = new Date(await page.locator(infoSelector).locator('span.dark_text').filter({ hasText: 'Birthday:' }).evaluate((el) =>  document.evaluate(
+        'following-sibling::text()',
+        el,
+        null,
+        XPathResult.STRING_TYPE
+    ).stringValue.trim())) || null;
+
+    let biography: string | null = null;
+    
+    try {
+        biography = await page.locator('.people-informantion-more.js-people-informantion-more').innerText()
+    } catch (error) {}
+
+    const results = {
+        malId,
+        slug,
+        url: request.url,
+        name,
+        givenName,
+        familyName,
+        birthday,
+        biography
+    }
+
+    console.log('author results', results);
 });
