@@ -424,3 +424,23 @@ router.addHandler("authors", async ({ request, page, log }) => {
 
     console.log('author results', results);
 });
+
+router.addHandler('profiles', async ({ request, enqueueLinks, log }) => {
+    log.info(`Handling user URLs`);
+
+    const [_, username] = /\/profile\/([^\/]+)/gm.exec(request.url) as RegExpExecArray;
+
+    enqueueLinks({
+        globs: [`https://myanimelist.net/profile/${username}/friends?p=*`],
+        label: 'friends'
+    })
+});
+
+router.addHandler('friends', async ({ enqueueLinks, log }) => {
+    log.info(`Handling review URLs`);
+
+    // enqueueLinks({
+    //     selector: '#content > div > div.container-right > div > div.boxlist-container.friend.mb16 > div > div.di-tc.va-t.pl8.data > div.title > a',
+    //     label: 'profiles'
+    // })
+});
