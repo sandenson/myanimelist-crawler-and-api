@@ -41,7 +41,7 @@ router.addHandler("top-manga", async ({ enqueueLinks, page, log }) => {
 router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
     log.info(`Handling anime URLs`);
 
-    const [_, malId, slug] = /\/anime\/([0-9]*)\/([^\/]*)/gm.exec(request.url) as RegExpExecArray;
+    const [_, malId, slug] = /\/anime\/([0-9]+)\/([^\/]+)/gm.exec(request.url) as RegExpExecArray;
     
     //* Selectors
     await page.waitForSelector('div.score-label');
@@ -72,7 +72,7 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
             .filter({ hasText: 'Adaptation:' })
             .locator('a')
             .evaluateAll((els: HTMLAnchorElement[]) => els.map(el => {
-                const [_, malId] = /\/manga\/([0-9]*)\/([^\/]*)/gm.exec(el.href) as RegExpExecArray;
+                const [_, malId] = /\/manga\/([0-9]+)\/([^\/]+)/gm.exec(el.href) as RegExpExecArray;
                 return Number(malId);
             })) as number[] | null;
 
@@ -92,7 +92,7 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
 
     const producerUrls = await page.locator(infoSelector).filter({ hasText: 'Producers:' }).locator('a[title]').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
     const producerIds = producerUrls.filter(prod => !!prod).map(prod => {
-        const [_, malId] = /\/anime\/producer\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        const [_, malId] = /\/anime\/producer\/([0-9]+)\/([^\/]+)/gm.exec(prod) as RegExpExecArray;
         return Number(malId);
     })
 
@@ -103,7 +103,7 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
 
     const licensorUrls = await page.locator(infoSelector).filter({ hasText: 'Licensors:' }).locator('a[title]').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
     const licensorIds = licensorUrls.filter(prod => !!prod).map(prod => {
-        const [_, malId] = /\/anime\/producer\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        const [_, malId] = /\/anime\/producer\/([0-9]+)\/([^\/]+)/gm.exec(prod) as RegExpExecArray;
         return Number(malId);
     })
 
@@ -114,7 +114,7 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
 
     const studioUrls = await page.locator(infoSelector).filter({ hasText: 'Studios:' }).locator('a[title]').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
     const studioIds = studioUrls.filter(prod => !!prod).map(prod => {
-        const [_, malId] = /\/anime\/producer\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        const [_, malId] = /\/anime\/producer\/([0-9]+)\/([^\/]+)/gm.exec(prod) as RegExpExecArray;
         return Number(malId);
     })
 
@@ -125,7 +125,7 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
 
     const genreUrls = await page.locator(infoSelector).filter({ hasText: 'Genres:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
     const genreIds = genreUrls.filter(prod => !!prod).map(prod => {
-        const [_, malId] = /\/anime\/genre\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        const [_, malId] = /\/anime\/genre\/([0-9]+)\/([^\/]+)/gm.exec(prod) as RegExpExecArray;
         return Number(malId);
     })
 
@@ -139,7 +139,7 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
 
     const themeUrls = themeUrls1.concat(themeUrls2);
     const themeIds = themeUrls.filter(prod => !!prod).map(prod => {
-        const [_, malId] = /\/anime\/genre\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        const [_, malId] = /\/anime\/genre\/([0-9]+)\/([^\/]+)/gm.exec(prod) as RegExpExecArray;
         return Number(malId);
     })
 
@@ -183,7 +183,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
     
     log.info(`Handling manga URLs`);
 
-    const [_, malId, slug] = /\/manga\/([0-9]*)\/([^\/]*)/gm.exec(request.url) as RegExpExecArray;
+    const [_, malId, slug] = /\/manga\/([0-9]+)\/([^\/]+)/gm.exec(request.url) as RegExpExecArray;
     
     //* Selectors
     await page.waitForSelector('div.score-label');
@@ -210,7 +210,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
 
     const serializerUrls = await page.locator(infoSelector).filter({ hasText: 'Serialization:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href));
     const serializerIds = serializerUrls.filter(ser => !!ser).map(ser => {
-        const [_, malId] = /\/manga\/magazine\/([0-9]*)\/([^\/]*)/gm.exec(ser) as RegExpExecArray;
+        const [_, malId] = /\/manga\/magazine\/([0-9]+)\/([^\/]+)/gm.exec(ser) as RegExpExecArray;
         return Number(malId);
     })
 
@@ -224,7 +224,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
 
     const genreUrls = genreUrls1.concat(genreUrls2);
     const genreIds = genreUrls.filter(prod => !!prod).map(prod => {
-        const [_, malId] = /\/manga\/genre\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        const [_, malId] = /\/manga\/genre\/([0-9]+)\/([^\/]+)/gm.exec(prod) as RegExpExecArray;
         return Number(malId);
     })
 
@@ -238,7 +238,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
 
     const themeUrls = themeUrls1.concat(themeUrls2);
     const themeIds = themeUrls.filter(prod => !!prod).map(prod => {
-        const [_, malId] = /\/manga\/genre\/([0-9]*)\/([^\/]*)/gm.exec(prod) as RegExpExecArray;
+        const [_, malId] = /\/manga\/genre\/([0-9]+)\/([^\/]+)/gm.exec(prod) as RegExpExecArray;
         return Number(malId);
     })
 
@@ -250,7 +250,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
     const authorObjs = await page.locator(infoSelector).filter({ hasText: 'Authors:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => {
         const url = el.href;
 
-        const [_, malId] = /\/people\/([0-9]*)\/([^\/]*)/gm.exec(url) as RegExpExecArray;
+        const [_, malId] = /\/people\/([0-9]+)\/([^\/]+)/gm.exec(url) as RegExpExecArray;
         
         const [__, role] = /\(([^(^)]*)\)/gm.exec(document.evaluate(
             'following-sibling::text()',
@@ -272,7 +272,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
     const externalLinks = await page.locator('.external_links > a').locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href)) as string[] | null;
     
     const parentStory = await page.locator('table.anime_detail_related_anime > tbody > tr').filter({ hasText: 'Parent story:' }).locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => {
-        const [_, malId] = /\/manga\/([0-9]*)\/([^\/]*)/gm.exec(el.href) as RegExpExecArray;
+        const [_, malId] = /\/manga\/([0-9]+)\/([^\/]+)/gm.exec(el.href) as RegExpExecArray;
 
         return Number(malId);
     })) as number[] | null;
@@ -296,7 +296,7 @@ router.addHandler("manga", async ({ request, enqueueLinks, page, log }) => {
         externalLinks
     };
 
-    console.log('anime results', results);
+    console.log('manga results', results);
 });
 
 router.addHandler("producers", async ({ request, page, log }) => {
@@ -348,7 +348,7 @@ router.addHandler("themes", async ({ request, page, log }) => {
 router.addHandler("magazines", async ({ request, page, log }) => {
     log.info(`Handling magazine URLs`);
 
-    const [_, malId, slug] = /\/manga\/magazine\/([0-9]*)\/([^\/]*)/gm.exec(request.url) as RegExpExecArray;
+    const [_, malId, slug] = /\/manga\/magazine\/([0-9]+)\/([^\/]+)/gm.exec(request.url) as RegExpExecArray;
 
     //* Selectors
     await page.waitForSelector('#contentWrapper > div:nth-child(1) > h1.h1');
@@ -367,7 +367,7 @@ router.addHandler("magazines", async ({ request, page, log }) => {
 router.addHandler("authors", async ({ request, page, log }) => {
     log.info(`Handling author URLs`);
 
-    const [_, malId, slug] = /\/people\/([0-9]*)\/([^\/]*)/gm.exec(request.url) as RegExpExecArray;
+    const [_, malId, slug] = /\/people\/([0-9]+)\/([^\/]+)/gm.exec(request.url) as RegExpExecArray;
 
     //* Selectors
     await page.waitForSelector('#contentWrapper');
