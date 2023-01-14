@@ -445,10 +445,36 @@ router.addHandler('reviews', async ({ enqueueLinks, page, log }) => {
     } catch (error) {}
 })
 
-router.addHandler('profiles', async ({ request, enqueueLinks, log }) => {
+router.addHandler('profiles', async ({ request, page, enqueueLinks, log }) => {
     log.info(`Handling profile URLs`);
 
     const [_, username] = /\/profile\/([^\/]+)/gm.exec(request.url) as RegExpExecArray;
+
+    const profileContainerSelector = '#content > div > div.container-left > div.user-profile';
+    await page.waitForSelector(profileContainerSelector);
+
+    const profilePicture = await page.$eval('div.user-image > img.lazyloaded', (el: HTMLImageElement) => el.src);
+    
+    const userStatusSelector = profileContainerSelector + ' > ul.user-status > li.clearfix';
+
+    const gender = await page.locator(userStatusSelector).filter({ hasText: 'Gender'}).evaluate(el => el.lastElementChild?.textContent?.trim() || null);
+    
+    const birthday = new Date(await page.locator(userStatusSelector).filter({ hasText: 'Birthday'}).evaluate(el => el.lastElementChild?.textContent?.trim() || 'kek')) || null;
+    
+    const location = await page.locator(userStatusSelector).filter({ hasText: 'Location'}).evaluate(el => el.lastElementChild?.textContent?.trim() || null);
+
+    const dateJoined = new Date(await page.locator(userStatusSelector).filter({ hasText: 'Joined'}).evaluate(el => el.lastElementChild?.textContent?.trim() || 'kek')) || null;
+
+    const results = {
+        username,
+        profilePicture,
+        gender,
+        birthday,
+        location,
+        dateJoined
+    }
+
+    console.log('profile results', results);
 
     await enqueueLinks({
         urls: [`https://myanimelist.net/profile/${username}/friends?p=1`],
