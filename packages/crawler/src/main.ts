@@ -10,10 +10,6 @@ const startUrls = [
     {
         url: 'https://myanimelist.net/topmanga.php',
         label: 'top-manga'
-    },
-    {
-        url: 'https://myanimelist.net/profile/sandenson',
-        label: 'profiles'
     }
 ];
 

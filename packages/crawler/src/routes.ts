@@ -425,22 +425,71 @@ router.addHandler("authors", async ({ request, page, log }) => {
     console.log('author results', results);
 });
 
+router.addHandler('reviews', async ({ enqueueLinks, page, log }) => {
+    log.info(`Handling review URLs`);
+
+    await page.waitForSelector('div.username > a[data-ga-click-type="review-anime-reviewer"]');
+    await enqueueLinks({
+        urls: [
+            await page.$eval('div.username > a[data-ga-click-type="review-anime-reviewer"]', (el: HTMLAnchorElement) => el.href)
+        ],
+        label: 'profiles'
+    })
+    
+    try {
+        await page.waitForSelector('a[data-ga-click-type="review-more-reviews"]');
+        await enqueueLinks({
+            selector: 'a[data-ga-click-type="review-more-reviews"]',
+            label: 'reviews'
+        });
+    } catch (error) {}
+})
+
 router.addHandler('profiles', async ({ request, enqueueLinks, log }) => {
-    log.info(`Handling user URLs`);
+    log.info(`Handling profile URLs`);
 
     const [_, username] = /\/profile\/([^\/]+)/gm.exec(request.url) as RegExpExecArray;
 
-    enqueueLinks({
-        globs: [`https://myanimelist.net/profile/${username}/friends?p=*`],
+    await enqueueLinks({
+        urls: [`https://myanimelist.net/profile/${username}/friends?p=1`],
         label: 'friends'
     })
 });
 
-router.addHandler('friends', async ({ enqueueLinks, log }) => {
-    log.info(`Handling review URLs`);
+router.addHandler('friends', async ({ request, enqueueLinks, page, log }) => {
+    log.info(`Handling friend URLs`);
+    
+    const [_, username] = /\/profile\/([^\/]+)/gm.exec(request.url) as RegExpExecArray;
 
-    // enqueueLinks({
-    //     selector: '#content > div > div.container-right > div > div.boxlist-container.friend.mb16 > div > div.di-tc.va-t.pl8.data > div.title > a',
-    //     label: 'profiles'
-    // })
+    const friendsInfo = await page.$$eval('div.boxlist.col-3 > div.data', (els: HTMLDivElement[]) => els.map(el => {
+        const friendsSince = new Date(el.lastElementChild!.innerHTML!.replace('Friends since', '').trim());
+
+        const friendUrl = (el.querySelector('div.title > a') as HTMLAnchorElement).href;
+        const [_, username] = /\/profile\/([^\/]+)/gm.exec(friendUrl) as RegExpExecArray;
+        
+        return { username, friendsSince, friendUrl };
+    }));
+
+    const results = friendsInfo.map(({username: user2, friendsSince}) => {
+        return { users: [ username, user2 ], friendsSince }
+    });
+
+    console.log('friend results', results);
+
+    try {
+        await enqueueLinks({
+            urls: friendsInfo.map(({ friendUrl }) => friendUrl),
+            label: 'profiles'
+        })
+    } catch (error) {}
+    
+    try {
+        const nextPageSelector = '#content > div > div.container-right > div > div:nth-child(4) > div > a';
+
+        await page.waitForSelector(nextPageSelector);
+        await enqueueLinks({
+            urls: [await page.$eval(nextPageSelector, (el: HTMLAnchorElement) => el.href)],
+            label: 'profiles'
+        })
+    } catch (error) {}
 });
