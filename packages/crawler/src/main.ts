@@ -18,6 +18,10 @@ const crawler = new PlaywrightCrawler({
   //   proxyUrls: ["http://177.93.78.25:4153"],
   // }),
   requestHandler: router,
+  maxRequestsPerCrawl: 20,
+  maxConcurrency: 10,
+  navigationTimeoutSecs: 180,
+  requestHandlerTimeoutSecs: 180
 });
 
 await crawler.run(startUrls);

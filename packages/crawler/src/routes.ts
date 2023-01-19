@@ -1,6 +1,8 @@
 import { createPlaywrightRouter } from "crawlee";
 import { genreHandler } from "./handlers/genreHandler.ts";
 import { producerHandler } from "./handlers/producerHandler.ts";
+import { animeListHelper } from "./helpers/animeListHelper.ts";
+import { mangaListHelper } from "./helpers/mangaListHelper.ts";
 
 export const router = createPlaywrightRouter();
 
@@ -149,6 +151,11 @@ router.addHandler("anime", async ({ request, enqueueLinks, page, log }) => {
     })
 
     const externalLinks = await page.locator('.external_links > a').locator('a').evaluateAll((els: HTMLAnchorElement[]) => els.map(el => el.href)) as string[] | null;
+
+    await enqueueLinks({
+        urls: [`https://myanimelist.net/anime/${malId}/${slug}/reviews?spoiler=on&preliminary=on`],
+        label: 'reviews'
+    })
 
     const results = {
         malId: Number(malId),
@@ -445,25 +452,51 @@ router.addHandler('reviews', async ({ enqueueLinks, page, log }) => {
     } catch (error) {}
 })
 
-router.addHandler('profiles', async ({ request, page, enqueueLinks, log }) => {
+router.addHandler('profiles', async ({ blockRequests, request, page, enqueueLinks, log }) => {
     log.info(`Handling profile URLs`);
 
+    await blockRequests({
+        urlPatterns: [
+            'https://cdn.myanimelist.net',
+            '.css'
+        ]
+    });
+    
     const [_, username] = /\/profile\/([^\/]+)/gm.exec(request.url) as RegExpExecArray;
-
+    
     const profileContainerSelector = '#content > div > div.container-left > div.user-profile';
     await page.waitForSelector(profileContainerSelector);
-
-    const profilePicture = await page.$eval('div.user-image > img.lazyloaded', (el: HTMLImageElement) => el.src);
+    
+    let profilePicture: string | null = null;
+    
+    try {
+        await page.$eval('div.user-image > img.lazyloaded', (el: HTMLImageElement) => el.src);
+    } catch (error) {}
     
     const userStatusSelector = profileContainerSelector + ' > ul.user-status > li.clearfix';
-
-    const gender = await page.locator(userStatusSelector).filter({ hasText: 'Gender'}).evaluate(el => el.lastElementChild?.textContent?.trim() || null);
     
-    const birthday = new Date(await page.locator(userStatusSelector).filter({ hasText: 'Birthday'}).evaluate(el => el.lastElementChild?.textContent?.trim() || 'kek')) || null;
+    let gender: string | null = null;
     
-    const location = await page.locator(userStatusSelector).filter({ hasText: 'Location'}).evaluate(el => el.lastElementChild?.textContent?.trim() || null);
-
+    try {
+        gender = await page.locator(userStatusSelector).filter({ hasText: 'Gender'}).evaluate(el => el.lastElementChild?.textContent?.trim() || null);
+    } catch (error) {}
+    
+    let birthday: Date | null = null;
+    
+    try {
+        birthday = new Date(await page.locator(userStatusSelector).filter({ hasText: 'Birthday'}).evaluate(el => el.lastElementChild?.textContent?.trim() || 'kek')) || null;
+    } catch (error) {}
+    
+    let location: string | null = null;
+    
+    try {
+        location = await page.locator(userStatusSelector).filter({ hasText: 'Location'}).evaluate(el => el.lastElementChild?.textContent?.trim() || null);
+    } catch (error) {}
+    
     const dateJoined = new Date(await page.locator(userStatusSelector).filter({ hasText: 'Joined'}).evaluate(el => el.lastElementChild?.textContent?.trim() || 'kek')) || null;
+
+    const animeList = await animeListHelper(username);
+    const mangaList = await mangaListHelper(username);
 
     const results = {
         username,
@@ -471,10 +504,12 @@ router.addHandler('profiles', async ({ request, page, enqueueLinks, log }) => {
         gender,
         birthday,
         location,
-        dateJoined
+        dateJoined,
+        animeList,
+        mangaList
     }
 
-    console.log('profile results', results);
+    console.log('profile results', results.animeList);
 
     await enqueueLinks({
         urls: [`https://myanimelist.net/profile/${username}/friends?p=1`],
