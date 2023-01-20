@@ -12,7 +12,11 @@ export const producerHandler = async ({request, page}: { request: Request<Dictio
     const spaceitPadSelector = infoSelector + ' > .mb16 > .spaceit_pad';
     await page.waitForSelector(infoSelector);
 
-    const japaneseName = (await page.locator(spaceitPadSelector).filter({ hasText: 'Japanese:' }).innerText()).replace('Japanese: ', '').trim();
+    let japaneseName: string | null = '';
+
+    try {
+        japaneseName = (await page.locator(spaceitPadSelector).filter({ hasText: 'Japanese:' }).innerText()).replace('Japanese: ', '').trim();
+    } catch (error) {}
     
     const establishment = new Date((await page.locator(spaceitPadSelector).filter({ hasText: 'Established:' }).innerText()).replace('Established: ', '').trim()) || null;
 
